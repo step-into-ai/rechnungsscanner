@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  @apply box-border;
+}
+
+body {
+  @apply m-0 bg-cloud text-slate-900 antialiased font-sans min-h-screen;
+  background-image: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(79, 70, 229, 0.14) 100%);
+}
+
+a {
+  @apply font-medium text-ocean underline-offset-4 transition-colors;
+}
+
+a:hover {
+  @apply text-blue-500;
+}
+
+button {
+  @apply font-sans;
+}
+
+::selection {
+  background: rgba(14, 165, 233, 0.35);
+  color: #0f172a;
+}
