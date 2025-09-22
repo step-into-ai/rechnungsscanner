@@ -1,69 +1,57 @@
-# React + TypeScript + Vite
+Rechnungsscanner App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Eine kleine React/Vite-Anwendung, mit der Belege (Fotos oder PDFs) über die Kamera oder Dateiupload direkt an einen n8n-Webhook gesendet werden.
+Ideal, um Rechnungen automatisiert in Workflows (z. B. OCR, KI-Extraktion, Buchhaltung) einzubinden.
 
-Currently, two official plugins are available:
+🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+📸 Live-Kamera: Belege direkt per Webcam/Handykamera scannen
 
-## Expanding the ESLint configuration
+📂 Dateiupload: JPG, PNG, PDF hochladen
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+🔗 Direkter Webhook: Alle Dateien werden an deine n8n-Instanz geschickt
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+💾 Lokale Speicherung: Letzte Einträge & Einstellungen werden im Browser gespeichert
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+🎨 Dark/Light-Theme umschaltbar
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+📑 CSV-Export der erkannten Rechnungsdaten
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+⚙️ Installation & Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Repository klonen:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+git clone https://github.com/step-into-ai/rechnungsscanner.git
+cd rechnungsscanner
+npm install
+npm run dev
+
+Dann läuft die App lokal auf http://localhost:5173
+
+🔗 Webhook konfigurieren
+
+Öffne die App und wechsle zum Tab „Einstellungen“.
+
+Trage dort deine persönliche n8n-Webhook-URL ein (z. B. https://dein-server.de/webhook/rechnung).
+
+Speichern klicken → URL wird nur lokal im Browser hinterlegt.
+
+Ab jetzt werden alle Scans und Uploads direkt an deinen n8n-Workflow gesendet.
+
+👉 Beispiel für einen einfachen Workflow in n8n:
+
+Node: Webhook (POST, binary data akzeptieren)
+
+Node: OCR / KI-Extraktion
+
+Node: Google Sheets / Datenbank zum Speichern
+
+🛡️ Datenschutz
+
+Alle Einstellungen & Historie werden nur lokal im Browser gespeichert.
+
+Es findet keine zentrale Speicherung statt.
+
+📜 Lizenz
+
+MIT License – feel free to use, adapt and improve.
