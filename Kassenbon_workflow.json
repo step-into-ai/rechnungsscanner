@@ -1,0 +1,254 @@
+{
+  "name": "Kassenbon scannen",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bfd82691-f6d5-4db5-8439-14005dbfd4e2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        48
+      ],
+      "id": "098f5a43-e8f8-4402-95cb-bc18898f23b3",
+      "name": "Webhook",
+      "webhookId": "bfd82691-f6d5-4db5-8439-14005dbfd4e2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "chatgpt-4o-latest"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        240
+      ],
+      "id": "be85feea-b31e-4c08-81ad-f20fee6ab0e5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XWLrPE5xMOXiDUB8",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.extractedText }}",
+        "options": {
+          "systemMessage": "=Du bist ein extraktionssicherer Beleg-Parser. Du bekommst den vollen OCR-Text eines Kassenbons/Rechnungsbelegs in Deutsch. \nDeine Aufgabe: extrahiere exakt die folgenden Felder und gib **nur** gültiges JSON (ohne Markdown, ohne Kommentare) zurück:\n\nZIEL-SCHEMA\n{\n  \"vendor\": string | null,           // Aussteller (z. B. \"Deutsche Post AG\")\n  \"invoiceNumber\": string | null,    // Rechnungs- oder Belegnummer (falls vorhanden)\n  \"invoiceDate\": string | null,      // Datum im Format YYYY-MM-DD\n  \"totalAmount\": number | null,      // Gesamtbetrag (Brutto) als Dezimalzahl mit Punkt, z. B. 12.99\n  \"currency\": string | null,         // Währung als ISO-Code, z. B. \"EUR\"\n  \"confidence\": number               // 0..1: dein Vertrauen in die Extraktion (z. B. 0.83)\n}\n\nANWEISUNGEN\n1) **Nur JSON ausgeben.** Keine Erläuterungen, kein Text außerhalb des JSON.\n2) **Vendor**: Name des Händlers/Unternehmens oben oder in der Nähe der Adresse/Kopfzeile. \n   - Entferne Rechtsformen-Suffixe nicht (GmbH, AG sind okay).\n   - Falls mehrere Namen erscheinen, nimm den prominentesten/oben stehenden.\n3) **invoiceNumber**: Suche nach Mustern wie „Rechnungsnummer“, „Rechnung Nr“, „Beleg-Nr“, „Bon-Nr“, „Kassenbon Nr“, „Belegnummer“, „RN“, „Invoice“, „Receipt“, „Dok.-Nr.“, \"Transaktionsnummer\". \n   - Wenn mehrere Nummern: bevorzuge die, die explizit als Rechnungs-/Belegnummer markiert ist. \n   - Wenn nur Kassenbon: „Bon-/Beleg-Nr“ reicht. Wenn keine plausibel: null.\n4) **invoiceDate**:\n   - Akzeptiere Formate: DD.MM.YYYY, DD.MM.YY, YYYY-MM-DD, YY-MM-DD, DD/MM/YYYY, u. ä.\n   - Normalisiere zu **YYYY-MM-DD**. \n   - Wenn mehrere Daten: bevorzuge das Datum in der Kopf- oder Summensektion (nicht „TSE-Start/Ende“ etc.). \n   - Ungültiges Datum => null.\n5) **totalAmount**:\n   - Nimm den **Gesamtbetrag (Brutto)**. Bevorzugte Labels: „Gesamt“, „Summe“, „Endbetrag“, „Total“, „Amount due“, „Zu zahlen“.\n   - Wenn mehrere Summen: wähle die mit MwSt. inkludiert bzw. die finale Zahl.\n   - Erkenne Dezimaltrennzeichen: Komma oder Punkt. Normalisiere zu **Punkt** (12,99 → 12.99).\n   - Entferne Währungszeichen (€) vor der Konvertierung.\n   - Falls nur Nettosumme ohne eindeutige Gesamtsumme -> versuche den höchsten plausiblen Endbetrag; wenn zweifelhaft -> null und confidence absenken.\n6) **currency**:\n   - Erkenne aus Symbol/Text (€, EUR, CHF, $, etc.). Standardfall in Deutschland: „EUR“ wenn € vorkommt oder Kontext DE ist.\n   - Wenn unklar: null.\n7) **Rauschen/Metadaten**: Ignoriere TSE-Daten, Signaturen, QR-Block, lange Hashes, interne IDs ohne Label.\n8) **Confidence**: Schätze 0..1 (zwei Dezimalstellen). Senke bei unsicherem Vendor/Date/Amount; hebe bei klaren Labels.\n9) **Robustheit**:\n   - Entferne OCR-Artefakte (z. B. „1“ vs „I“, „S“ vs „5“), aber nur wenn offensichtlich.\n   - Keine Halluzinationen: wenn Feld nicht sicher, setze null und senke confidence.\n10) **Kein zusätzliches Feld**: exakt das Schema oben.\n\nGIB NUR DAS JSON AUS.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        48
+      ],
+      "id": "e2a142a5-2999-45cb-93be-488c2e7db169",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1120,
+        48
+      ],
+      "id": "0d26ba84-2ff1-4ef7-a165-9dff7da2551d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0c85a01d-4d80-44d1-ae92-0c3d31433c76",
+              "leftValue": "={{ $json.body.mimeType }}",
+              "rightValue": "application/pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        48
+      ],
+      "id": "e63522e1-9383-4fd4-a5b9-d4205f6b9864",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "documentType": "image_url",
+        "binaryProperty": "={{ Object.keys($binary)[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mistralAi",
+      "typeVersion": 1,
+      "position": [
+        496,
+        160
+      ],
+      "id": "9bf154ee-444a-4957-a4fc-d34321231d24",
+      "name": "Bild",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "kEusI1hpJnBWBUvc",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "binaryProperty": "={{ Object.keys($binary)[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mistralAi",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -48
+      ],
+      "id": "a5a801ea-c39e-4724-a0d1-95ac423d6bf3",
+      "name": "PDF",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "kEusI1hpJnBWBUvc",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Mistral API Key\nDen bekommst du wenn du dich hier anmeldest:\nconsole.mistral.ai"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -240
+      ],
+      "id": "30c76d4e-6343-44d6-b18d-b17fdc0d516b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bild",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bild": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3d45a259-6b10-422e-9763-8ab4ea270d82",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb1634809689147b9e471b6060504b77ec3b0c47e59f5ae02e208c1700842c3a"
+  },
+  "id": "SWbj1phgJ1gsY71V",
+  "tags": []
+}
